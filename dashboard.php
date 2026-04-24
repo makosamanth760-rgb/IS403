@@ -2,40 +2,33 @@
 require_once '../config/database.php';
 require_once '../config/session.php';
 
-requireUserType('student');
+requireUserType('student_services');
 
-$student_id = $_SESSION['user_id'];
 $conn = getDBConnection();
 
-// Flash message (e.g., after unenroll)
-$flash_message = $_SESSION['message'] ?? '';
-$flash_message_type = $_SESSION['message_type'] ?? '';
-unset($_SESSION['message'], $_SESSION['message_type']);
+// Get all dormitories
+$dormitories_sql = "SELECT dormitory_id, dormitory_name FROM dormitories ORDER BY dormitory_name";
+$dormitories_result = $conn->query($dormitories_sql);
+$dormitories = $dormitories_result->fetch_all(MYSQLI_ASSOC);
 
-// Get current semester and year (defaulting to Semester 1, 2024)
-$current_semester = 'Semester 1';
-$current_year = 2024;
+$selected_dormitory = $_GET['dormitory_id'] ?? null;
+$students_in_dormitory = array();
 
-// Get enrolled units for current semester
-$sql = "SELECT uo.offering_id, u.unit_code, u.unit_name, uo.semester, uo.year, e.mark, e.grade
-        FROM enrollments e
-        JOIN unit_offerings uo ON e.offering_id = uo.offering_id
-        JOIN units u ON uo.unit_code = u.unit_code
-        WHERE e.student_id = ? AND uo.semester = ? AND uo.year = ?
-        ORDER BY u.unit_code";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("ssi", $student_id, $current_semester, $current_year);
-$stmt->execute();
-$enrolled_units = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
-
-// Get student info
-$sql = "SELECT * FROM students WHERE student_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $student_id);
-$stmt->execute();
-$student = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+if ($selected_dormitory) {
+    $sql = "SELECT s.student_id, s.name, s.email, d.dormitory_name, f.floor_number, r.room_number
+            FROM dormitory_allocations da
+            JOIN students s ON da.student_id = s.student_id
+            JOIN rooms r ON da.room_id = r.room_id
+            JOIN floors f ON r.floor_id = f.floor_id
+            JOIN dormitories d ON f.dormitory_id = d.dormitory_id
+            WHERE d.dormitory_id = ?
+            ORDER BY d.dormitory_name, f.floor_number, r.room_number, s.name";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $selected_dormitory);
+    $stmt->execute();
+    $students_in_dormitory = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+}
 
 $conn->close();
 ?>
@@ -44,7 +37,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - WPU SMS</title>
+    <title>Student Services Dashboard - WPU SMS</title>
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body class="dashboard-page">
@@ -56,9 +49,7 @@ $conn->close();
             <h2>WPU Student Management System</h2>
             <div class="nav-links">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-                <a href="profile.php">My Profile</a>
-                <a href="transcript.php">My Transcript</a>
-                <a href="enroll.php">Enroll in Units</a>
+                <a href="allocate_dormitory.php">Allocate Dormitory</a>
                 <a href="../logout.php">Logout</a>
             </div>
         </div>
@@ -66,64 +57,64 @@ $conn->close();
 
     <div class="container">
         <div class="dashboard-header">
-            <h1>Student Dashboard</h1>
+            <h1>Student Services Office Dashboard</h1>
         </div>
-
-        <?php if ($flash_message): ?>
-            <div class="message <?php echo htmlspecialchars($flash_message_type ?: 'success'); ?>">
-                <?php echo htmlspecialchars($flash_message); ?>
-            </div>
-        <?php endif; ?>
         
         <div class="dashboard-grid">
-            <div class="card">
-                <h3>Current Semester Enrollments</h3>
-                <div class="card-content">
-                    <p style="margin-bottom: 20px;"><strong>Semester:</strong> <?php echo htmlspecialchars($current_semester . ' ' . $current_year); ?></p>
-                
-                <?php if (count($enrolled_units) > 0): ?>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Unit Code</th>
-                                <th>Unit Name</th>
-                                <th>Mark</th>
-                                <th>Grade</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($enrolled_units as $unit): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($unit['unit_code']); ?></td>
-                                    <td><?php echo htmlspecialchars($unit['unit_name']); ?></td>
-                                    <td><?php echo $unit['mark'] !== null ? htmlspecialchars($unit['mark']) : 'N/A'; ?></td>
-                                    <td><?php echo $unit['grade'] ? htmlspecialchars($unit['grade']) : 'N/A'; ?></td>
-                                    <td>
-                                        <a href="unenroll.php?offering_id=<?php echo $unit['offering_id']; ?>" 
-                                           class="btn btn-danger btn-sm"
-                                           onclick="return confirm('Are you sure you want to unenroll from this unit?');">Unenroll</a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                    <p><strong>Total Enrolled:</strong> <?php echo count($enrolled_units); ?> / 4 units</p>
-                <?php else: ?>
-                    <p>You are not enrolled in any units for this semester.</p>
-                    <a href="enroll.php" class="btn btn-primary">Enroll in Units</a>
-                <?php endif; ?>
-                </div>
-            </div>
-            
             <div class="card">
                 <h3>Quick Actions</h3>
                 <div class="card-content">
                     <ul class="action-list">
-                        <li><a href="enroll.php" class="btn btn-primary">Enroll in Units</a></li>
-                        <li><a href="profile.php" class="btn btn-secondary">View My Profile</a></li>
-                        <li><a href="transcript.php" class="btn btn-secondary">View My Transcript</a></li>
+                        <li><a href="allocate_dormitory.php" class="btn btn-primary">Allocate Student to Dormitory</a></li>
                     </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>View Students by Dormitory</h3>
+                <div class="card-content">
+                    <form method="GET" action="">
+                    <div class="form-group">
+                        <label for="dormitory_id">Select Dormitory:</label>
+                        <select name="dormitory_id" id="dormitory_id" onchange="this.form.submit()">
+                            <option value="">-- Select Dormitory --</option>
+                            <?php foreach ($dormitories as $dorm): ?>
+                                <option value="<?php echo $dorm['dormitory_id']; ?>" 
+                                        <?php echo ($selected_dormitory == $dorm['dormitory_id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($dorm['dormitory_name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </form>
+                
+                <?php if ($selected_dormitory && count($students_in_dormitory) > 0): ?>
+                    <h4>Students in <?php echo htmlspecialchars($students_in_dormitory[0]['dormitory_name']); ?>:</h4>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Floor</th>
+                                <th>Room</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($students_in_dormitory as $student): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($student['student_id']); ?></td>
+                                    <td><?php echo htmlspecialchars($student['name']); ?></td>
+                                    <td><?php echo htmlspecialchars($student['email']); ?></td>
+                                    <td><?php echo htmlspecialchars($student['floor_number']); ?></td>
+                                    <td><?php echo htmlspecialchars($student['room_number']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php elseif ($selected_dormitory): ?>
+                    <p>No students are currently allocated to this dormitory.</p>
+                <?php endif; ?>
                 </div>
             </div>
         </div>
