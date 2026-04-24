@@ -2,22 +2,40 @@
 require_once '../config/database.php';
 require_once '../config/session.php';
 
-requireUserType('registrar');
+requireUserType('student');
 
+$student_id = $_SESSION['user_id'];
 $conn = getDBConnection();
 
-// Get students eligible for HECAS scholarship (GPA >= 2.5)
-$sql = "SELECT s.student_id, s.name, s.email, 
-        AVG(e.mark) as avg_mark,
-        (AVG(e.mark) / 25.0) as gpa
-        FROM students s
-        INNER JOIN enrollments e ON s.student_id = e.student_id
-        WHERE e.mark IS NOT NULL
-        GROUP BY s.student_id, s.name, s.email
-        HAVING gpa >= 2.5
-        ORDER BY gpa DESC, s.name";
-$result = $conn->query($sql);
-$eligible_students = $result->fetch_all(MYSQLI_ASSOC);
+// Flash message (e.g., after unenroll)
+$flash_message = $_SESSION['message'] ?? '';
+$flash_message_type = $_SESSION['message_type'] ?? '';
+unset($_SESSION['message'], $_SESSION['message_type']);
+
+// Get current semester and year (defaulting to Semester 1, 2024)
+$current_semester = 'Semester 1';
+$current_year = 2024;
+
+// Get enrolled units for current semester
+$sql = "SELECT uo.offering_id, u.unit_code, u.unit_name, uo.semester, uo.year, e.mark, e.grade
+        FROM enrollments e
+        JOIN unit_offerings uo ON e.offering_id = uo.offering_id
+        JOIN units u ON uo.unit_code = u.unit_code
+        WHERE e.student_id = ? AND uo.semester = ? AND uo.year = ?
+        ORDER BY u.unit_code";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ssi", $student_id, $current_semester, $current_year);
+$stmt->execute();
+$enrolled_units = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+// Get student info
+$sql = "SELECT * FROM students WHERE student_id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $student_id);
+$stmt->execute();
+$student = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
 $conn->close();
 ?>
@@ -26,7 +44,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Dashboard - WPU SMS</title>
+    <title>Student Dashboard - WPU SMS</title>
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body class="dashboard-page">
@@ -38,7 +56,9 @@ $conn->close();
             <h2>WPU Student Management System</h2>
             <div class="nav-links">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-                <a href="add_student.php">Add New Student</a>
+                <a href="profile.php">My Profile</a>
+                <a href="transcript.php">My Transcript</a>
+                <a href="enroll.php">Enroll in Units</a>
                 <a href="../logout.php">Logout</a>
             </div>
         </div>
@@ -46,48 +66,64 @@ $conn->close();
 
     <div class="container">
         <div class="dashboard-header">
-            <h1>Registrar's Office Dashboard</h1>
+            <h1>Student Dashboard</h1>
         </div>
-        
-        <div class="dashboard-grid registrar-dashboard">
-            <div class="card">
-                <h3>Quick Actions</h3>
-                <div class="card-content">
-                    <ul class="action-list">
-                        <li><a href="add_student.php" class="btn btn-primary">Add New Student</a></li>
-                    </ul>
-                </div>
+
+        <?php if ($flash_message): ?>
+            <div class="message <?php echo htmlspecialchars($flash_message_type ?: 'success'); ?>">
+                <?php echo htmlspecialchars($flash_message); ?>
             </div>
-            
+        <?php endif; ?>
+        
+        <div class="dashboard-grid">
             <div class="card">
-                <h3>HECAS Scholarship Eligible Students</h3>
+                <h3>Current Semester Enrollments</h3>
                 <div class="card-content">
-                    <p style="margin-bottom: 20px; color: #666; font-size: 14px;">Students with GPA of 2.5 or higher:</p>
+                    <p style="margin-bottom: 20px;"><strong>Semester:</strong> <?php echo htmlspecialchars($current_semester . ' ' . $current_year); ?></p>
                 
-                <?php if (count($eligible_students) > 0): ?>
+                <?php if (count($enrolled_units) > 0): ?>
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Student ID</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>GPA</th>
+                                <th>Unit Code</th>
+                                <th>Unit Name</th>
+                                <th>Mark</th>
+                                <th>Grade</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($eligible_students as $student): ?>
+                            <?php foreach ($enrolled_units as $unit): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($student['student_id']); ?></td>
-                                    <td><?php echo htmlspecialchars($student['name']); ?></td>
-                                    <td><?php echo htmlspecialchars($student['email']); ?></td>
-                                    <td><?php echo $student['gpa'] ? number_format($student['gpa'], 2) : '0.00'; ?></td>
+                                    <td><?php echo htmlspecialchars($unit['unit_code']); ?></td>
+                                    <td><?php echo htmlspecialchars($unit['unit_name']); ?></td>
+                                    <td><?php echo $unit['mark'] !== null ? htmlspecialchars($unit['mark']) : 'N/A'; ?></td>
+                                    <td><?php echo $unit['grade'] ? htmlspecialchars($unit['grade']) : 'N/A'; ?></td>
+                                    <td>
+                                        <a href="unenroll.php?offering_id=<?php echo $unit['offering_id']; ?>" 
+                                           class="btn btn-danger btn-sm"
+                                           onclick="return confirm('Are you sure you want to unenroll from this unit?');">Unenroll</a>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    <p><strong>Total Enrolled:</strong> <?php echo count($enrolled_units); ?> / 4 units</p>
                 <?php else: ?>
-                    <p>No students are currently eligible for HECAS scholarship.</p>
+                    <p>You are not enrolled in any units for this semester.</p>
+                    <a href="enroll.php" class="btn btn-primary">Enroll in Units</a>
                 <?php endif; ?>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Quick Actions</h3>
+                <div class="card-content">
+                    <ul class="action-list">
+                        <li><a href="enroll.php" class="btn btn-primary">Enroll in Units</a></li>
+                        <li><a href="profile.php" class="btn btn-secondary">View My Profile</a></li>
+                        <li><a href="transcript.php" class="btn btn-secondary">View My Transcript</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
