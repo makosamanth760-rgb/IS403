@@ -1,6 +1,6 @@
 <?php
-require_once '../config/database.php';
-require_once '../config/session.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/session.php';
 
 requireUserType('registrar');
 
@@ -14,9 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address = trim($_POST['address'] ?? '');
     $contact_number = trim($_POST['contact_number'] ?? '');
     $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+    $student_password = $_POST['password'] ?? '';
     
-    if (empty($student_id) || empty($name) || empty($gender) || empty($email) || empty($password)) {
+    if (empty($student_id) || empty($name) || empty($gender) || empty($email) || empty($student_password)) {
         $message = 'Please fill in all required fields.';
         $message_type = 'error';
     } else {
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message_type = 'error';
         } else {
             // Hash password
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $hashed_password = password_hash($student_password, PASSWORD_DEFAULT);
             
             // Insert new student
             $insert_sql = "INSERT INTO students (student_id, name, gender, address, contact_number, email, password) 
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $insert_stmt->bind_param("sssssss", $student_id, $name, $gender, $address, $contact_number, $email, $hashed_password);
             
             if ($insert_stmt->execute()) {
-                $message = 'Student successfully added! Student ID: ' . htmlspecialchars($student_id) . ', Email: ' . htmlspecialchars($email) . ', Password: ' . htmlspecialchars($password);
+                $message = 'Student successfully added!';
                 $message_type = 'success';
                 
                 // Clear form data
@@ -67,19 +67,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Student - WPU SMS</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-logo">
-                <img src="../assets/image/WPU-Logo-Main.webp" alt="WPU Logo" class="navbar-logo">
+                <img src="assets/image/WPU-Logo-Main.png" alt="WPU Logo" class="navbar-logo">
             </div>
             <h2>WPU Student Management System</h2>
             <div class="nav-links">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-                <a href="dashboard.php">Dashboard</a>
-                <a href="../logout.php">Logout</a>
+                <a href="enrollment_list.php">Enrollment List</a>
+                <a href="logout.php">Logout</a>
             </div>
         </div>
     </nav>
@@ -140,8 +140,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <small>This password will be provided to the student for login.</small>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">Add Student</button>
-                <a href="dashboard.php" class="btn btn-secondary">Cancel</a>
+                <div class="form-actions" style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+                    <button type="submit" class="btn btn-primary">Add Student</button>
+                    <a href="enrollment_list.php" class="btn btn-secondary">Cancel</a>
+                </div>
             </form>
         </div>
     </div>

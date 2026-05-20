@@ -42,13 +42,23 @@ try {
         echo "<div class='error'>❌ Error updating SS001: " . $conn->error . "</div>";
     }
     $stmt2->close();
+
+    // Update sample student password (if present)
+    $sql3 = "UPDATE students SET password = ? WHERE student_id = 'STU001'";
+    $stmt3 = $conn->prepare($sql3);
+    $stmt3->bind_param("s", $hashed_password);
+    if ($stmt3->execute() && $stmt3->affected_rows > 0) {
+        echo "<div class='success'>✅ Updated STU001 password</div>";
+    }
+    $stmt3->close();
     
     echo "<hr>";
     echo "<div class='success'>✅ All passwords updated!</div>";
-    echo "<p><strong>Login credentials:</strong></p>";
+    echo "<p><strong>Login credentials</strong> (use matching <em>Login As</em> role):</p>";
     echo "<ul>";
-    echo "<li><strong>Registrar:</strong> registrar@wpu.edu / password: <code>password</code></li>";
-    echo "<li><strong>Student Services:</strong> services@wpu.edu / password: <code>password</code></li>";
+    echo "<li><strong>Registrar:</strong> registrar@wpu.edu / <code>password</code></li>";
+    echo "<li><strong>Student Services:</strong> services@wpu.edu / <code>password</code></li>";
+    echo "<li><strong>Student:</strong> student@wpu.edu / <code>password</code></li>";
     echo "</ul>";
     
     echo "<hr>";

@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
         $config_content = file_get_contents($config_file);
         
         // Replace the password line
-        $old_pattern = "/define\('DB_PASS',\s*'[^']*'\);/";
-        $new_line = "define('DB_PASS', '" . addslashes($password) . "');";
+        $old_pattern = '/\$db_password\s*=\s*"[^"]*";/';
+        $new_line = '$db_password = "' . addslashes($password) . '";';
         $config_content = preg_replace($old_pattern, $new_line, $config_content);
         
         if (file_put_contents($config_file, $config_content)) {
@@ -178,8 +178,8 @@ EXIT;
                 <p>Your database configuration has been saved successfully.</p>
                 <p><strong>Next steps:</strong></p>
                 <ol>
-                    <li>Make sure the <strong>WPU</strong> database exists</li>
-                    <li>Import the database schema from <code>database/schema.sql</code> using phpMyAdmin</li>
+                    <li>Make sure the <strong>wpu</strong> database exists</li>
+                    <li>Import the database schema from <code>schema.sql</code> using phpMyAdmin</li>
                     <li>Or the system will create the database automatically on first use</li>
                 </ol>
                 <p><a href="index.php"><button>Go to Login Page</button></a></p>

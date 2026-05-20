@@ -1,8 +1,11 @@
 <?php
-require_once '../config/database.php';
-require_once '../config/session.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/session.php';
 
-requireUserType('student_services');
+requireLogin();
+if (!isStudentServices()) {
+    redirectAfterLogin();
+}
 
 $conn = getDBConnection();
 
@@ -38,19 +41,19 @@ $conn->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Services Dashboard - WPU SMS</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="dashboard-page">
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-logo">
-                <img src="../assets/image/WPU-Logo-Main.webp" alt="WPU Logo" class="navbar-logo">
+                <img src="assets/image/WPU-Logo-Main.png" alt="WPU Logo" class="navbar-logo">
             </div>
             <h2>WPU Student Management System</h2>
             <div class="nav-links">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                 <a href="allocate_dormitory.php">Allocate Dormitory</a>
-                <a href="../logout.php">Logout</a>
+                <a href="logout.php">Logout</a>
             </div>
         </div>
     </nav>

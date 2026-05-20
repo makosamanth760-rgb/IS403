@@ -34,8 +34,8 @@ An enterprise information system for managing student enrollment, admissions, an
 2. **Create the database**
    - Open phpMyAdmin (http://localhost/phpmyadmin)
    - Create a new database named `WPU`
-   - Import the SQL schema file: `database/schema.sql`
-   - Or run the SQL commands from `database/schema.sql` in phpMyAdmin
+   - Import the SQL schema file: `schema.sql`
+   - Or run the SQL commands from `schema.sql` in phpMyAdmin
 
 3. **Configure database connection**
    - The database configuration is in `config/database.php`

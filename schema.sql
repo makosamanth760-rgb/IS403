@@ -1,8 +1,8 @@
 -- Western Pacific University Student Management System
 -- Database Schema
 
-CREATE DATABASE IF NOT EXISTS WPU CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE WPU;
+CREATE DATABASE IF NOT EXISTS wpu CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE wpu;
 
 -- Staff table
 CREATE TABLE staff (
@@ -94,12 +94,13 @@ CREATE TABLE dormitory_allocations (
     UNIQUE KEY unique_allocation (student_id)
 );
 
--- Insert sample data
+-- Insert sample data (password for all accounts below: password)
 INSERT INTO staff (staff_id, name, gender, address, contact_number, email, password, role) VALUES
-('REG001', 'John Registrar', 'Male', '123 Admin St', '555-0101', 'registrar@wpu.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'registrar'),
-('SS001', 'Jane Services', 'Female', '456 Services Ave', '555-0102', 'services@wpu.edu', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'student_services');
+('REG001', 'John Registrar', 'Male', '123 Admin St', '555-0101', 'registrar@wpu.edu', '$2y$10$V97AXBjH/QRiUf7OgtLQl.59xt6Zw9oop2c.C8dZ95RTPxkO.lkzm', 'registrar'),
+('SS001', 'Jane Services', 'Female', '456 Services Ave', '555-0102', 'services@wpu.edu', '$2y$10$V97AXBjH/QRiUf7OgtLQl.59xt6Zw9oop2c.C8dZ95RTPxkO.lkzm', 'student_services');
 
--- Default password for staff: password
+INSERT INTO students (student_id, name, gender, address, contact_number, email, password) VALUES
+('STU001', 'Alex Student', 'Male', '789 Campus Rd', '555-0201', 'student@wpu.edu', '$2y$10$V97AXBjH/QRiUf7OgtLQl.59xt6Zw9oop2c.C8dZ95RTPxkO.lkzm');
 
 INSERT INTO units (unit_code, unit_name, description) VALUES
 ('IS303', 'Information Systems', 'Introduction to information systems and their role in organizations'),
@@ -124,6 +125,11 @@ INSERT INTO unit_offerings (unit_code, semester, year) VALUES
 ('CHEM101', 'Semester 1', 2024),
 ('BIO101', 'Semester 2', 2024),
 ('ECON101', 'Semester 2', 2024);
+
+-- Sample enrollments for registrar report (password: password — student@wpu.edu)
+INSERT INTO enrollments (student_id, offering_id)
+SELECT 'STU001', offering_id FROM unit_offerings
+WHERE semester = 'Semester 1' AND year = 2024 AND unit_code IN ('IS303', 'CS101', 'ENG101');
 
 INSERT INTO dormitories (dormitory_name) VALUES
 ('North Hall'),

@@ -4,7 +4,7 @@
  * This script will create all necessary tables and insert sample data
  */
 
-require_once 'config/database.php';
+require_once __DIR__ . '/config/database.php';
 
 echo "<!DOCTYPE html><html><head><title>Database Setup</title>";
 echo "<style>body{font-family:Arial;max-width:800px;margin:50px auto;padding:20px;}";
@@ -17,11 +17,20 @@ echo "<h2>Database Setup - Creating Tables and Sample Data</h2>";
 try {
     $conn = getDBConnection();
     
-    // Read and execute the schema file
-    $schema_file = 'database/schema.sql';
-    
-    if (!file_exists($schema_file)) {
-        die("<div class='error'>Schema file not found: $schema_file</div>");
+    // Read and execute the schema file (project root; legacy path database/schema.sql)
+    $schema_candidates = [
+        __DIR__ . '/schema.sql',
+        __DIR__ . '/database/schema.sql',
+    ];
+    $schema_file = null;
+    foreach ($schema_candidates as $path) {
+        if (file_exists($path)) {
+            $schema_file = $path;
+            break;
+        }
+    }
+    if ($schema_file === null) {
+        die("<div class='error'>Schema file not found. Expected <code>schema.sql</code> in the project folder.</div>");
     }
     
     $sql = file_get_contents($schema_file);
@@ -55,18 +64,58 @@ try {
         }
     }
     
+    // Ensure staff/student passwords are bcrypt hashes (fixes old plaintext seed data)
+    $default_password_hash = password_hash('password', PASSWORD_DEFAULT);
+    $hash_stmt = $conn->prepare("UPDATE staff SET password = ? WHERE staff_id IN ('REG001', 'SS001')");
+    if ($hash_stmt) {
+        $hash_stmt->bind_param('s', $default_password_hash);
+        $hash_stmt->execute();
+        $hash_stmt->close();
+    }
+    $hash_stmt = $conn->prepare("UPDATE students SET password = ? WHERE student_id = 'STU001'");
+    if ($hash_stmt) {
+        $hash_stmt->bind_param('s', $default_password_hash);
+        $hash_stmt->execute();
+        $hash_stmt->close();
+    }
+
+    // Seed enrollments when table is empty (so enrollment_list.php has data to show)
+    $enrollment_count = 0;
+    $count_result = $conn->query('SELECT COUNT(*) AS total FROM enrollments');
+    if ($count_result) {
+        $enrollment_count = intval($count_result->fetch_assoc()['total'] ?? 0);
+    }
+    if ($enrollment_count === 0) {
+        $conn->query(
+            "INSERT INTO enrollments (student_id, offering_id)
+             SELECT 'STU001', offering_id FROM unit_offerings
+             WHERE semester = 'Semester 1' AND year = 2024 AND unit_code IN ('IS303', 'CS101', 'ENG101')"
+        );
+        $conn->query(
+            "INSERT IGNORE INTO enrollments (student_id, offering_id)
+             SELECT s.student_id,
+                    (SELECT offering_id FROM unit_offerings
+                     WHERE semester = 'Semester 1' AND year = 2024 AND unit_code = 'IS303' LIMIT 1)
+             FROM students s
+             WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id)"
+        );
+        echo "<div class='success'>✅ Sample enrollment records created for the enrollment list report.</div>";
+    }
+
     echo "<div class='success'>✅ Database setup completed!</div>";
     echo "<p>Successfully executed: $success_count statements</p>";
     if ($error_count > 0) {
         echo "<p>Errors: $error_count (some may be expected if tables already exist)</p>";
     }
+    echo "<div class='success'>✅ Login passwords reset to <code>password</code> for sample accounts.</div>";
     
     echo "<hr>";
     echo "<h3>Sample Login Credentials:</h3>";
+    echo "<p>Select the matching <strong>Login As</strong> role on the login page.</p>";
     echo "<ul>";
-    echo "<li><strong>Registrar:</strong> registrar@wpu.edu / password: <code>password</code></li>";
-    echo "<li><strong>Student Services:</strong> services@wpu.edu / password: <code>password</code></li>";
-    echo "<li><strong>Students:</strong> Create students through Registrar's Office</li>";
+    echo "<li><strong>Registrar:</strong> registrar@wpu.edu / <code>password</code></li>";
+    echo "<li><strong>Student Services:</strong> services@wpu.edu / <code>password</code></li>";
+    echo "<li><strong>Student:</strong> student@wpu.edu / <code>password</code></li>";
     echo "</ul>";
     
     echo "<hr>";

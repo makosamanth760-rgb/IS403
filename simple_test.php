@@ -39,14 +39,14 @@ echo "<h3>Test 2: Using config file variables</h3>";
 require_once 'config/database.php';
 
 echo "<pre>";
-echo "Host: $host\n";
-echo "Username: $username\n";
-echo "Password: '$password' (length: " . strlen($password) . ")\n";
-echo "Password === '': " . ($password === '' ? 'true' : 'false') . "\n";
-echo "Password type: " . gettype($password) . "\n";
+echo "Host: $db_host\n";
+echo "Username: $db_username\n";
+echo "Password: '$db_password' (length: " . strlen($db_password) . ")\n";
+echo "Password === '': " . ($db_password === '' ? 'true' : 'false') . "\n";
+echo "Password type: " . gettype($db_password) . "\n";
 echo "</pre>";
 
-$conn2 = @new mysqli($host, $username, $password);
+$conn2 = @new mysqli($db_host, $db_username, $db_password);
 if (!$conn2->connect_error) {
     echo "<div class='success'>✅ SUCCESS! Config variables work!</div>";
     $conn2->close();

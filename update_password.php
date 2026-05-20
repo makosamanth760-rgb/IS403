@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
     $config_content = file_get_contents($config_file);
     
     // Replace the password line
-    $pattern = '/\$password\s*=\s*"[^"]*";/';
-    $replacement = '$password = "' . addslashes($new_password) . '";';
+    $pattern = '/\$db_password\s*=\s*"[^"]*";/';
+    $replacement = '$db_password = "' . addslashes($new_password) . '";';
     $config_content = preg_replace($pattern, $replacement, $config_content);
     
     // Write back to file
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
         echo "</style></head><body>";
         echo "<div class='error'>❌ Error: Could not write to config/database.php. Please check file permissions.</div>";
         echo "<p>You can manually update the file by changing this line:</p>";
-        echo "<pre>\$password = \"" . addslashes($new_password) . "\";</pre>";
+        echo "<pre>\$db_password = \"" . addslashes($new_password) . "\";</pre>";
         echo "<p><a href='index.php'>Go to Login Page</a></p>";
         echo "</body></html>";
     }

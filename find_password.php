@@ -8,9 +8,11 @@ echo "<!DOCTYPE html><html><head><title>Find MySQL Password</title>";
 echo "<style>body{font-family:Arial;max-width:800px;margin:50px auto;padding:20px;}";
 echo ".success{color:green;font-weight:bold;padding:10px;background:#d4edda;border:1px solid #c3e6cb;border-radius:5px;margin:10px 0;}";
 echo ".error{color:red;padding:10px;background:#f8d7da;border:1px solid #f5c6cb;border-radius:5px;margin:10px 0;}";
+echo ".muted{color:#555;padding:8px 12px;background:#f5f5f5;border:1px solid #ddd;border-radius:5px;margin:6px 0;font-size:14px;}";
 echo ".info{color:blue;padding:10px;background:#d1ecf1;border:1px solid #bee5eb;border-radius:5px;margin:10px 0;}";
 echo "code{background:#f4f4f4;padding:2px 6px;border-radius:3px;}</style></head><body>";
 echo "<h2>MySQL Password Finder</h2>";
+echo "<p class='muted' style='margin-bottom:20px;'>This page tries several common passwords in order. <strong>Only one needs to succeed.</strong> Gray lines below mean &quot;that guess was wrong&quot; — not that MySQL is broken.</p>";
 
 $host = "localhost:3307";
 $username = "root";
@@ -44,22 +46,38 @@ foreach ($passwords_to_try as $pass => $label) {
         }
         $conn->close();
     } else {
-        echo "<div class='error'>❌ Failed with: " . htmlspecialchars($label) . " - " . $conn->connect_error . "</div>";
+        echo "<div class='muted'>Not this one: <strong>" . htmlspecialchars($label) . "</strong> — " . htmlspecialchars($conn->connect_error) . "</div>";
     }
 }
 
 if ($found_password !== null) {
+    $config_file = __DIR__ . '/config/database.php';
+    $config_already_ok = false;
+    if (is_readable($config_file)) {
+        $config_content = file_get_contents($config_file);
+        $config_already_ok = (bool) preg_match(
+            '/\$db_password\s*=\s*"' . preg_quote(addslashes($found_password), '/') . '";/',
+            $config_content
+        );
+    }
+
     echo "<div class='info'>";
     echo "<h3>✅ Password Found!</h3>";
-    echo "<p><strong>Update your config/database.php file:</strong></p>";
-    echo "<pre style='background:#f4f4f4;padding:15px;border-radius:5px;overflow-x:auto;'>";
-    echo "\$password = \"" . addslashes($found_password) . "\";";
-    echo "</pre>";
-    echo "<p>Or click the button below to auto-update:</p>";
-    echo "<form method='POST' action='update_password.php'>";
-    echo "<input type='hidden' name='password' value='" . htmlspecialchars($found_password) . "'>";
-    echo "<button type='submit' style='padding:10px 20px;background:#28a745;color:white;border:none;border-radius:5px;cursor:pointer;'>Update config/database.php</button>";
-    echo "</form>";
+    echo "<p>Use an <strong>empty</strong> root password on <code>localhost:3307</code>.</p>";
+
+    if ($config_already_ok) {
+        echo "<div class='success'>Your <code>config/database.php</code> already has the correct setting. You can go straight to the login page — no update needed.</div>";
+    } else {
+        echo "<p><strong>Update your config/database.php file:</strong></p>";
+        echo "<pre style='background:#f4f4f4;padding:15px;border-radius:5px;overflow-x:auto;'>";
+        echo "\$db_password = \"" . addslashes($found_password) . "\";";
+        echo "</pre>";
+        echo "<p>Or click the button below to auto-update:</p>";
+        echo "<form method='POST' action='update_password.php'>";
+        echo "<input type='hidden' name='password' value='" . htmlspecialchars($found_password) . "'>";
+        echo "<button type='submit' style='padding:10px 20px;background:#28a745;color:white;border:none;border-radius:5px;cursor:pointer;'>Update config/database.php</button>";
+        echo "</form>";
+    }
     echo "</div>";
 } else {
     echo "<div class='error'>";
@@ -72,6 +90,7 @@ if ($found_password !== null) {
     echo "</div>";
 }
 
+if ($found_password === null) {
 echo "<hr>";
 echo "<h3>How to Reset MySQL Root Password:</h3>";
 echo "<ol>";
@@ -89,8 +108,12 @@ echo "ALTER USER 'root'@'localhost' IDENTIFIED BY '';\n";
 echo "FLUSH PRIVILEGES;\n";
 echo "EXIT;\n";
 echo "</pre>";
+}
 
 echo "<p><a href='index.php'>Go to Login Page</a></p>";
+if ($found_password !== null) {
+    echo " &nbsp;|&nbsp; <a href='setup_database_tables.php'>Set up database tables</a>";
+}
 echo "</body></html>";
 ?>
 
