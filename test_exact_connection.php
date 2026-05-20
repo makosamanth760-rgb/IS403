@@ -10,7 +10,7 @@ echo ".error{color:red;padding:15px;background:#f8d7da;border:1px solid #f5c6cb;
 echo "</style></head><body>";
 echo "<h2>Testing Exact Connection Code</h2>";
 
-$host = "localhost:3307";
+$host = "localhost:3306";
 $username = "root";
 $password = ""; // Empty string - same as password finder
 

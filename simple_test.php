@@ -13,7 +13,7 @@ echo "<h2>Simple Direct Connection Test</h2>";
 
 // Test 1: Direct connection with hardcoded values
 echo "<h3>Test 1: Direct connection (hardcoded)</h3>";
-$host = "localhost:3307";
+$host = "localhost:3306";
 $user = "root";
 $pass = ""; // Empty string
 

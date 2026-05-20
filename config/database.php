@@ -1,6 +1,6 @@
 <?php
 // Database configuration (use $db_* names so login/forms cannot overwrite these)
-$db_host = "localhost:3307";
+$db_host = "localhost:3306";
 $db_username = "root";
 $db_password = "";
 $db_name = "wpu";
@@ -60,6 +60,9 @@ function getDBConnection() {
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+/** Minimum overall GPA for HECAS financial assistance eligibility. */
+define('HECAS_MIN_GPA', 2.5);
+
 // Helper function to calculate GPA
 function calculateGPA($student_id) {
     $conn = getDBConnection();
@@ -91,6 +94,10 @@ function calculateGPA($student_id) {
     // Convert to 4.0 scale (assuming marks are out of 100)
     $gpa = ($total_marks / $count) / 25.0; // 100/4 = 25
     return round($gpa, 2);
+}
+
+function isHecasEligible($student_id) {
+    return calculateGPA($student_id) >= HECAS_MIN_GPA;
 }
 
 // Helper function to get grade from mark

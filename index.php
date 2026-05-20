@@ -29,13 +29,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $conn->prepare($sql);
                     $stmt->bind_param('s', $email);
                 } else {
-                    $role = ($user_type === 'registrar') ? 'registrar' : 'student_services';
+                    $role_map = [
+                        'registrar' => 'registrar',
+                        'student_services' => 'student_services',
+                        'dean' => 'dean',
+                    ];
+                    $role = $role_map[$user_type] ?? '';
+                    if ($role === '') {
+                        $error = 'Invalid staff login type selected.';
+                        $stmt = null;
+                    } else {
                     $sql = 'SELECT staff_id, name, email, password, role FROM staff WHERE email = ? AND role = ? LIMIT 1';
                     $stmt = $conn->prepare($sql);
                     $stmt->bind_param('ss', $email, $role);
+                    }
                 }
 
-                if (!$stmt) {
+                if (!isset($stmt) || !$stmt) {
                     $error = 'Login failed. Please try again or run setup_database_tables.php.';
                 } else {
                     $stmt->execute();
@@ -122,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="student" <?php echo (($_POST['user_type'] ?? '') === 'student') ? 'selected' : ''; ?>>Student</option>
                         <option value="registrar" <?php echo (($_POST['user_type'] ?? '') === 'registrar') ? 'selected' : ''; ?>>Registrar's Office</option>
                         <option value="student_services" <?php echo (($_POST['user_type'] ?? '') === 'student_services') ? 'selected' : ''; ?>>Student Services Office</option>
+                        <option value="dean" <?php echo (($_POST['user_type'] ?? '') === 'dean') ? 'selected' : ''; ?>>Dean (Residential Housing)</option>
                     </select>
                 </div>
 
@@ -143,6 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <strong>wpu</strong> database accounts (run setup once):<br>
                     Registrar — <code>registrar@wpu.edu</code><br>
                     Student Services — <code>services@wpu.edu</code><br>
+                    Dean — <code>dean@wpu.edu</code><br>
                     Student — <code>student@wpu.edu</code><br>
                     Password for all: <code>password</code>
                 </p>

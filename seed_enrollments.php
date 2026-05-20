@@ -29,11 +29,23 @@ try {
          WHERE NOT EXISTS (SELECT 1 FROM enrollments e WHERE e.student_id = s.student_id)"
     );
 
+    $conn->query(
+        "UPDATE enrollments e
+         JOIN unit_offerings uo ON e.offering_id = uo.offering_id
+         SET e.mark = CASE uo.unit_code
+                 WHEN 'IS303' THEN 85 WHEN 'CS101' THEN 78 WHEN 'ENG101' THEN 80 ELSE e.mark END,
+             e.grade = CASE uo.unit_code
+                 WHEN 'IS303' THEN 'A' WHEN 'CS101' THEN 'B' WHEN 'ENG101' THEN 'A-' ELSE e.grade END
+         WHERE uo.semester = 'Semester 1' AND uo.year = 2024
+           AND uo.unit_code IN ('IS303', 'CS101', 'ENG101')
+           AND e.mark IS NULL"
+    );
+
     $after = intval($conn->query('SELECT COUNT(*) AS total FROM enrollments')->fetch_assoc()['total'] ?? 0);
     $added = $after - $before;
 
     echo '<div class="success">Done. Added ' . $added . ' enrollment(s). Total in database: ' . $after . '.</div>';
-    echo '<p><a href="enrollment_list.php">View enrollment list</a></p>';
+    echo '<p><a href="enrollment_list.php">View enrollment list</a> · <a href="hecas_eligibility.php">HECAS eligibility</a></p>';
     $conn->close();
 } catch (Throwable $e) {
     echo '<div class="error">' . htmlspecialchars($e->getMessage()) . '</div>';

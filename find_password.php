@@ -14,7 +14,7 @@ echo "code{background:#f4f4f4;padding:2px 6px;border-radius:3px;}</style></head>
 echo "<h2>MySQL Password Finder</h2>";
 echo "<p class='muted' style='margin-bottom:20px;'>This page tries several common passwords in order. <strong>Only one needs to succeed.</strong> Gray lines below mean &quot;that guess was wrong&quot; — not that MySQL is broken.</p>";
 
-$host = "localhost:3307";
+$host = "localhost:3306";
 $username = "root";
 
 // Common passwords to try
@@ -32,7 +32,7 @@ $passwords_to_try = [
 $found_password = null;
 $working_passwords = [];
 
-echo "<h3>Testing passwords on port 3307...</h3>";
+echo "<h3>Testing passwords on port 3306...</h3>";
 
 foreach ($passwords_to_try as $pass => $label) {
     $conn = @new mysqli($host, $username, $pass);
@@ -63,7 +63,7 @@ if ($found_password !== null) {
 
     echo "<div class='info'>";
     echo "<h3>✅ Password Found!</h3>";
-    echo "<p>Use an <strong>empty</strong> root password on <code>localhost:3307</code>.</p>";
+    echo "<p>Use an <strong>empty</strong> root password on <code>localhost:3306</code>.</p>";
 
     if ($config_already_ok) {
         echo "<div class='success'>Your <code>config/database.php</code> already has the correct setting. You can go straight to the login page — no update needed.</div>";

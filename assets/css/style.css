@@ -672,6 +672,30 @@ body.dashboard-page {
     display: block;
 }
 
+/* HECAS eligibility status */
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+}
+
+.status-eligible {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-ineligible {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
 /* GPA Display */
 .gpa {
     font-size: 1.5em;
@@ -746,6 +770,591 @@ h1 {
     color: #1A3A8A;
 }
 
+/* -------------------------------------------------------------------------
+   Student enrollment UI (enrollment_form.php, enroll.php)
+   ------------------------------------------------------------------------- */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.enrollment-page > .container > .message {
+    margin-bottom: 20px;
+}
+
+.enrollment-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.05em;
+    line-height: 1.55;
+    max-width: 760px;
+}
+
+.enrollment-progress {
+    margin-bottom: 28px;
+}
+
+.enrollment-progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.enrollment-progress.card h3.enrollment-progress-title {
+    margin: 8px 0 0 0;
+    padding: 0 0 0 0;
+    border: none;
+    font-size: 1.15em;
+    color: #1A3A8A;
+}
+
+.semester-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #1A3A8A 0%, #2A4A9A 100%);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+.enrollment-count {
+    font-size: 1.35em;
+    font-weight: 700;
+    color: #1A3A8A;
+    white-space: nowrap;
+}
+
+.progress-bar {
+    display: flex;
+    gap: 8px;
+    height: 12px;
+    align-items: stretch;
+}
+
+.progress-segment {
+    flex: 1;
+    border-radius: 4px;
+    background: #e9ecef;
+    transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.progress-segment.filled {
+    background: linear-gradient(90deg, #F2C100 0%, #E0B000 100%);
+    box-shadow: 0 1px 4px rgba(242, 193, 0, 0.45);
+}
+
+.enrollment-limit-note {
+    margin: 14px 0 0 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.enrollment-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 300px) 1fr;
+    gap: 28px;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.enrollment-sidebar h4.enrolled-heading {
+    margin-top: 22px;
+}
+
+.enrolled-heading {
+    font-size: 1em;
+    color: #1A3A8A;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.enrolled-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.enrolled-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #444;
+}
+
+.enrolled-list li:last-child {
+    border-bottom: none;
+}
+
+.unit-code-tag {
+    display: inline-block;
+    flex-shrink: 0;
+    background: #f0f4ff;
+    color: #1A3A8A;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(26, 58, 138, 0.15);
+}
+
+.enrollment-hint {
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.enrollment-main h3 {
+    margin-bottom: 8px;
+}
+
+.enroll-catalog-intro {
+    margin: 0 0 22px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.enroll-unit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.unit-enroll-card {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #fafbfd 0%, #fff 40%);
+    border: 1px solid #e6e9ef;
+    border-radius: 12px;
+    padding: 20px 20px 18px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.unit-enroll-card:hover {
+    border-color: rgba(26, 58, 138, 0.35);
+    box-shadow: 0 8px 24px rgba(26, 58, 138, 0.12);
+    transform: translateY(-2px);
+}
+
+.unit-enroll-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.unit-option-period {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.enrollment-main .unit-enroll-card h4.unit-enroll-title {
+    margin: 14px 0 10px 0;
+    padding: 0;
+    border: none;
+    font-size: 1.12em;
+    font-weight: 600;
+    color: #1A3A8A;
+    line-height: 1.35;
+}
+
+.unit-enroll-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #555;
+    flex: 1;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.unit-enroll-actions {
+    margin-top: 18px;
+    padding-top: 4px;
+}
+
+.unit-enroll-actions .btn-primary {
+    width: 100%;
+    margin-top: 0;
+    padding: 12px 16px;
+    font-size: 15px;
+}
+
+.enrollment-empty {
+    text-align: center;
+    padding: 28px 16px;
+    background: #f8f9fb;
+    border-radius: 10px;
+    border: 1px dashed #ced4da;
+}
+
+.enrollment-empty p {
+    margin-bottom: 18px;
+    color: #555;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.enrollment-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+    align-items: center;
+}
+
+.enrollment-form-actions .btn-primary {
+    flex: 1;
+    min-width: 180px;
+    margin-top: 0;
+}
+
+.enrollment-form-actions .btn-secondary {
+    flex: 0 0 auto;
+}
+
+.btn-lg {
+    padding: 16px 28px;
+    font-size: 17px;
+}
+
+.unit-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.unit-option {
+    display: block;
+    margin: 0;
+    cursor: pointer;
+}
+
+.unit-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.unit-option-body {
+    display: block;
+    padding: 16px 18px;
+    border: 2px solid #e6e9ef;
+    border-radius: 10px;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.unit-option input:focus + .unit-option-body {
+    outline: 2px solid #F2C100;
+    outline-offset: 2px;
+}
+
+.unit-option input:checked + .unit-option-body {
+    border-color: #1A3A8A;
+    background: #f5f8ff;
+    box-shadow: 0 4px 16px rgba(26, 58, 138, 0.12);
+}
+
+.unit-option:hover .unit-option-body {
+    border-color: rgba(26, 58, 138, 0.45);
+}
+
+.unit-option-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.unit-option-name {
+    display: block;
+    font-weight: 600;
+    color: #1A3A8A;
+    font-size: 1.05em;
+    margin-bottom: 6px;
+}
+
+.unit-option-desc {
+    display: block;
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+}
+
+.enroll-page-footer {
+    margin-top: 28px;
+    text-align: center;
+}
+
+.enroll-page-footer .btn-secondary {
+    display: inline-block;
+}
+
+/* -------------------------------------------------------------------------
+   Academic transcript (transcript.php)
+   ------------------------------------------------------------------------- */
+.transcript-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.05em;
+    line-height: 1.55;
+    max-width: 720px;
+}
+
+.transcript-summary {
+    margin-bottom: 28px;
+    padding: 0;
+    overflow: visible;
+}
+
+.transcript-summary::before {
+    height: 4px;
+}
+
+.transcript-summary-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 28px;
+    flex-wrap: wrap;
+    padding: 28px 30px 22px;
+    background: linear-gradient(135deg, #f8faff 0%, #fff 55%);
+    border-radius: 12px 12px 0 0;
+}
+
+.transcript-uni-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.transcript-summary .transcript-student-name {
+    margin: 0 0 10px 0;
+    padding: 0;
+    border: none;
+    font-size: 1.65em;
+    font-weight: 700;
+    color: #1A3A8A;
+    letter-spacing: -0.02em;
+}
+
+.transcript-student-id {
+    margin: 0 0 6px 0;
+}
+
+.transcript-student-email {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.transcript-gpa-panel {
+    text-align: center;
+    background: linear-gradient(145deg, #1A3A8A 0%, #2A4A9A 100%);
+    color: #fff;
+    padding: 22px 32px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(26, 58, 138, 0.35);
+    min-width: 160px;
+}
+
+.transcript-gpa-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.85;
+    margin-bottom: 6px;
+}
+
+.transcript-gpa-value {
+    display: block;
+    font-size: 2.75em;
+    font-weight: 800;
+    line-height: 1;
+    color: #F2C100;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.transcript-gpa-value.transcript-gpa-na {
+    font-size: 2em;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.transcript-gpa-scale {
+    display: block;
+    font-size: 12px;
+    margin-top: 6px;
+    opacity: 0.8;
+}
+
+.transcript-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #e9ecef;
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+}
+
+.transcript-stat {
+    background: #fff;
+    padding: 18px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.transcript-stat-value {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #1A3A8A;
+}
+
+.transcript-stat-label {
+    font-size: 12px;
+    color: #6c757d;
+    line-height: 1.4;
+    max-width: 140px;
+}
+
+.transcript-layout {
+    display: grid;
+    grid-template-columns: minmax(240px, 280px) 1fr;
+    gap: 28px;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.transcript-sidebar-note {
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #555;
+}
+
+.transcript-main h3 {
+    margin-bottom: 20px;
+}
+
+.transcript-period {
+    margin-bottom: 28px;
+}
+
+.transcript-period:last-child {
+    margin-bottom: 0;
+}
+
+.transcript-period-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.transcript-period-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.transcript-table-wrap {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.transcript-table {
+    margin-top: 0;
+}
+
+.transcript-table .transcript-unit-name {
+    font-weight: 500;
+    color: #333;
+    max-width: 280px;
+}
+
+.transcript-mark {
+    font-weight: 600;
+    color: #1A3A8A;
+    font-variant-numeric: tabular-nums;
+}
+
+.grade-badge {
+    display: inline-block;
+    min-width: 2.5em;
+    text-align: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.grade-high {
+    background: #d4edda;
+    color: #155724;
+}
+
+.grade-mid {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.grade-pass {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.grade-low {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.grade-pending {
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+.transcript-empty .btn-primary {
+    width: auto;
+    display: inline-block;
+    margin-top: 4px;
+    padding: 12px 24px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .nav-container {
@@ -788,7 +1397,36 @@ h1 {
     .dashboard-header h1 {
         font-size: 1.8em;
     }
-    
+
+    .enrollment-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .enroll-unit-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .enrollment-form-actions .btn-primary {
+        flex: 1 1 100%;
+    }
+
+    .transcript-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .transcript-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .transcript-summary-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .transcript-gpa-panel {
+        width: 100%;
+    }
+
     .container {
         padding: 20px 15px;
     }

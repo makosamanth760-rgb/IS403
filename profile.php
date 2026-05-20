@@ -50,9 +50,10 @@ $conn->close();
             <h2>WPU Student Management System</h2>
             <div class="nav-links">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-                <a href="dashboard.php">Dashboard</a>
-                <a href="transcript.php">My Transcript</a>
+                <a href="profile.php">My Profile</a>
+                <a href="dormitory_request.php">Dormitory Request</a>
                 <a href="enrollment_form.php">Enrollment Form</a>
+                <a href="transcript.php">My Transcript</a>
                 <a href="logout.php">Logout</a>
             </div>
         </div>

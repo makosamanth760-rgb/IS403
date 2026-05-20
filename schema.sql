@@ -131,6 +131,25 @@ INSERT INTO enrollments (student_id, offering_id)
 SELECT 'STU001', offering_id FROM unit_offerings
 WHERE semester = 'Semester 1' AND year = 2024 AND unit_code IN ('IS303', 'CS101', 'ENG101');
 
+-- Sample marks for HECAS eligibility (GPA >= 2.5): avg 81 -> GPA 3.24
+UPDATE enrollments e
+JOIN unit_offerings uo ON e.offering_id = uo.offering_id
+SET e.mark = CASE uo.unit_code
+        WHEN 'IS303' THEN 85
+        WHEN 'CS101' THEN 78
+        WHEN 'ENG101' THEN 80
+        ELSE e.mark
+    END,
+    e.grade = CASE uo.unit_code
+        WHEN 'IS303' THEN 'A'
+        WHEN 'CS101' THEN 'B'
+        WHEN 'ENG101' THEN 'A-'
+        ELSE e.grade
+    END
+WHERE e.student_id = 'STU001'
+  AND uo.semester = 'Semester 1' AND uo.year = 2024
+  AND uo.unit_code IN ('IS303', 'CS101', 'ENG101');
+
 INSERT INTO dormitories (dormitory_name) VALUES
 ('North Hall'),
 ('South Hall'),

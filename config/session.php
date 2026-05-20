@@ -43,6 +43,11 @@ function isStudentServices() {
     return isLoggedIn() && $_SESSION['user_type'] === 'student_services';
 }
 
+// Check if user is dean (residential housing)
+function isDean() {
+    return isLoggedIn() && $_SESSION['user_type'] === 'dean';
+}
+
 // Require login
 function requireLogin() {
     if (!isLoggedIn()) {
@@ -62,8 +67,22 @@ function redirectAfterLogin(): void {
             wpuRedirect('enrollment_list.php');
         case 'student_services':
             wpuRedirect('dashboard.php');
+        case 'dean':
+            wpuRedirect('dean_dormitory_requests.php');
         default:
             wpuRedirect('index.php');
+    }
+}
+
+// Dean or Student Services (residential housing)
+function isResidentialStaff() {
+    return isStudentServices() || isDean();
+}
+
+function requireResidentialStaff() {
+    requireLogin();
+    if (!isResidentialStaff()) {
+        redirectAfterLogin();
     }
 }
 

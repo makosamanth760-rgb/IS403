@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/config/session.php';
 
-requireUserType('student_services');
+requireResidentialStaff();
 
 $message = '';
 $message_type = '';
@@ -91,7 +91,8 @@ $conn->close();
             <h2>WPU Student Management System</h2>
             <div class="nav-links">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-                <a href="dashboard.php">Dashboard</a>
+                <a href="<?php echo isDean() ? 'dean_dormitory_requests.php' : 'dashboard.php'; ?>">Dashboard</a>
+                <a href="dean_dormitory_requests.php">Dormitory Requests</a>
                 <a href="logout.php">Logout</a>
             </div>
         </div>

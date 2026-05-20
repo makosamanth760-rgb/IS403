@@ -67,7 +67,7 @@ $student_stmt->execute();
 $student = $student_stmt->get_result()->fetch_assoc();
 $student_stmt->close();
 
-$units_sql = "SELECT uo.offering_id, u.unit_code, u.unit_name, uo.semester, uo.year
+$units_sql = "SELECT uo.offering_id, u.unit_code, u.unit_name, u.description, uo.semester, uo.year
               FROM unit_offerings uo
               JOIN units u ON uo.unit_code = u.unit_code
               WHERE uo.semester = ? AND uo.year = ?
@@ -81,6 +81,31 @@ $units_stmt->execute();
 $available_units = $units_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $units_stmt->close();
 
+$count_sql = "SELECT COUNT(*) AS total FROM enrollments e
+              JOIN unit_offerings uo ON e.offering_id = uo.offering_id
+              WHERE e.student_id = ? AND uo.semester = ? AND uo.year = ?";
+$count_stmt = $conn->prepare($count_sql);
+$count_stmt->bind_param("ssi", $student_id, $current_semester, $current_year);
+$count_stmt->execute();
+$enrollment_count = intval($count_stmt->get_result()->fetch_assoc()['total'] ?? 0);
+$count_stmt->close();
+
+$enrolled_sql = "SELECT u.unit_code, u.unit_name
+                 FROM enrollments e
+                 JOIN unit_offerings uo ON e.offering_id = uo.offering_id
+                 JOIN units u ON uo.unit_code = u.unit_code
+                 WHERE e.student_id = ? AND uo.semester = ? AND uo.year = ?
+                 ORDER BY u.unit_code";
+$enrolled_stmt = $conn->prepare($enrolled_sql);
+$enrolled_stmt->bind_param("ssi", $student_id, $current_semester, $current_year);
+$enrolled_stmt->execute();
+$enrolled_units = $enrolled_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$enrolled_stmt->close();
+
+$max_enrollments = 4;
+$slots_remaining = max(0, $max_enrollments - $enrollment_count);
+$at_limit = $enrollment_count >= $max_enrollments;
+
 $conn->close();
 ?>
 <!DOCTYPE html>
@@ -91,7 +116,7 @@ $conn->close();
     <title>Enrollment Form - WPU SMS</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body>
+<body class="dashboard-page enrollment-page">
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-logo">
@@ -100,7 +125,8 @@ $conn->close();
             <h2>WPU Student Management System</h2>
             <div class="nav-links">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
-                <a href="dashboard.php">Dashboard</a>
+                <a href="profile.php">My Profile</a>
+                <a href="enrollment_form.php">Enrollment Form</a>
                 <a href="transcript.php">My Transcript</a>
                 <a href="logout.php">Logout</a>
             </div>
@@ -108,7 +134,10 @@ $conn->close();
     </nav>
 
     <div class="container">
-        <h1>Student Enrollment Form</h1>
+        <div class="dashboard-header enrollment-header">
+            <h1>Student Enrollment Form</h1>
+            <p class="enrollment-subtitle">Register for unit offerings this semester. You may enroll in up to <?php echo $max_enrollments; ?> units.</p>
+        </div>
 
         <?php if ($message): ?>
             <div class="message <?php echo htmlspecialchars($message_type); ?>">
@@ -116,34 +145,107 @@ $conn->close();
             </div>
         <?php endif; ?>
 
-        <div class="card" style="margin-bottom: 20px;">
-            <h3>Student Details</h3>
-            <p><strong>Student ID:</strong> <?php echo htmlspecialchars($student['student_id'] ?? ''); ?></p>
-            <p><strong>Name:</strong> <?php echo htmlspecialchars($student['name'] ?? ''); ?></p>
-            <p><strong>Email:</strong> <?php echo htmlspecialchars($student['email'] ?? ''); ?></p>
-            <p><strong>Semester:</strong> <?php echo htmlspecialchars($current_semester . ' ' . $current_year); ?></p>
+        <div class="enrollment-progress card">
+            <div class="enrollment-progress-top">
+                <div>
+                    <span class="semester-badge"><?php echo htmlspecialchars($current_semester . ' ' . $current_year); ?></span>
+                    <h3 class="enrollment-progress-title">Semester enrollment</h3>
+                </div>
+                <span class="enrollment-count"><?php echo $enrollment_count; ?> / <?php echo $max_enrollments; ?> units</span>
+            </div>
+            <div class="progress-bar" role="progressbar"
+                 aria-valuenow="<?php echo $enrollment_count; ?>"
+                 aria-valuemin="0"
+                 aria-valuemax="<?php echo $max_enrollments; ?>">
+                <?php for ($i = 0; $i < $max_enrollments; $i++): ?>
+                    <span class="progress-segment <?php echo $i < $enrollment_count ? 'filled' : ''; ?>"></span>
+                <?php endfor; ?>
+            </div>
+            <?php if ($at_limit): ?>
+                <p class="enrollment-limit-note">You have reached the maximum enrollment for this semester.</p>
+            <?php elseif ($slots_remaining === 1): ?>
+                <p class="enrollment-limit-note"><?php echo $slots_remaining; ?> slot remaining.</p>
+            <?php else: ?>
+                <p class="enrollment-limit-note"><?php echo $slots_remaining; ?> slots remaining.</p>
+            <?php endif; ?>
         </div>
 
-        <div class="card">
-            <h3>Enroll Into Unit</h3>
-            <?php if (!empty($available_units)): ?>
-                <form method="POST" action="">
-                    <div class="form-group">
-                        <label for="offering_id">Select Unit Offering</label>
-                        <select name="offering_id" id="offering_id" required>
-                            <option value="">-- Select Unit --</option>
-                            <?php foreach ($available_units as $unit): ?>
-                                <option value="<?php echo intval($unit['offering_id']); ?>">
-                                    <?php echo htmlspecialchars($unit['unit_code'] . ' - ' . $unit['unit_name'] . ' (' . $unit['semester'] . ' ' . $unit['year'] . ')'); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+        <div class="enrollment-layout">
+            <aside class="card enrollment-sidebar">
+                <h3>Your details</h3>
+                <table class="info-table">
+                    <tr>
+                        <th>Student ID</th>
+                        <td><?php echo htmlspecialchars($student['student_id'] ?? ''); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Name</th>
+                        <td><?php echo htmlspecialchars($student['name'] ?? ''); ?></td>
+                    </tr>
+                    <tr>
+                        <th>Email</th>
+                        <td><?php echo htmlspecialchars($student['email'] ?? ''); ?></td>
+                    </tr>
+                </table>
+
+                <?php if (!empty($enrolled_units)): ?>
+                    <h4 class="enrolled-heading">Current enrollments</h4>
+                    <ul class="enrolled-list">
+                        <?php foreach ($enrolled_units as $unit): ?>
+                            <li>
+                                <span class="unit-code-tag"><?php echo htmlspecialchars($unit['unit_code']); ?></span>
+                                <?php echo htmlspecialchars($unit['unit_name']); ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <p class="text-muted enrollment-hint">No units enrolled yet this semester.</p>
+                <?php endif; ?>
+            </aside>
+
+            <section class="card enrollment-main">
+                <h3>Select a unit offering</h3>
+
+                <?php if ($at_limit): ?>
+                    <div class="enrollment-empty">
+                        <p>You cannot add more units until you unenroll from an existing offering.</p>
+                        <a href="profile.php" class="btn btn-secondary">View my profile</a>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit Enrollment Form</button>
-                </form>
-            <?php else: ?>
-                <p>No available units for enrollment in the current semester.</p>
-            <?php endif; ?>
+                <?php elseif (!empty($available_units)): ?>
+                    <form method="POST" action="" class="enrollment-form" id="enrollmentForm">
+                        <fieldset class="unit-picker">
+                            <legend class="sr-only">Available unit offerings</legend>
+                            <div class="unit-options">
+                                <?php foreach ($available_units as $unit): ?>
+                                    <label class="unit-option">
+                                        <input type="radio" name="offering_id"
+                                               value="<?php echo intval($unit['offering_id']); ?>" required>
+                                        <span class="unit-option-body">
+                                            <span class="unit-option-header">
+                                                <span class="unit-code-tag"><?php echo htmlspecialchars($unit['unit_code']); ?></span>
+                                                <span class="unit-option-period"><?php echo htmlspecialchars($unit['semester'] . ' ' . $unit['year']); ?></span>
+                                            </span>
+                                            <span class="unit-option-name"><?php echo htmlspecialchars($unit['unit_name']); ?></span>
+                                            <?php if (!empty($unit['description'])): ?>
+                                                <span class="unit-option-desc"><?php echo htmlspecialchars($unit['description']); ?></span>
+                                            <?php endif; ?>
+                                        </span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </fieldset>
+                        <div class="enrollment-form-actions">
+                            <button type="submit" class="btn btn-primary btn-lg">Submit enrollment</button>
+                            <a href="profile.php" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                <?php else: ?>
+                    <div class="enrollment-empty">
+                        <p>There are no additional units available for enrollment this semester.</p>
+                        <a href="profile.php" class="btn btn-secondary">Back to profile</a>
+                    </div>
+                <?php endif; ?>
+            </section>
         </div>
     </div>
 </body>

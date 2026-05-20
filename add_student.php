@@ -79,6 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="nav-links">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
                 <a href="enrollment_list.php">Enrollment List</a>
+                <a href="hecas_eligibility.php">HECAS Eligibility</a>
+                <a href="add_student.php">Add New Student</a>
                 <a href="logout.php">Logout</a>
             </div>
         </div>

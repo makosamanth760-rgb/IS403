@@ -2,10 +2,7 @@
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/config/session.php';
 
-requireLogin();
-if (!isStudentServices()) {
-    redirectAfterLogin();
-}
+requireResidentialStaff();
 
 $conn = getDBConnection();
 
@@ -52,7 +49,9 @@ $conn->close();
             <h2>WPU Student Management System</h2>
             <div class="nav-links">
                 <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
+                <a href="dean_dormitory_requests.php">Dormitory Requests</a>
                 <a href="allocate_dormitory.php">Allocate Dormitory</a>
+                <a href="dormitory_allocation_list.php">Allocation List</a>
                 <a href="logout.php">Logout</a>
             </div>
         </div>
@@ -68,7 +67,8 @@ $conn->close();
                 <h3>Quick Actions</h3>
                 <div class="card-content">
                     <ul class="action-list">
-                        <li><a href="allocate_dormitory.php" class="btn btn-primary">Allocate Student to Dormitory</a></li>
+                        <li><a href="dean_dormitory_requests.php" class="btn btn-primary">Review Dormitory Requests</a></li>
+                        <li><a href="allocate_dormitory.php" class="btn btn-secondary">Allocate Student to Dormitory</a></li>
                     </ul>
                 </div>
             </div>
