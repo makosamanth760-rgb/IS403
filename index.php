@@ -150,14 +150,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
 
             <div class="login-footer">
-                <p class="text-muted" style="font-size:12px;margin-bottom:12px;">
-                    <strong>wpu</strong> database accounts (run setup once):<br>
-                    Registrar — <code>registrar@wpu.edu</code><br>
-                    Student Services — <code>services@wpu.edu</code><br>
-                    Dean — <code>dean@wpu.edu</code><br>
-                    Student — <code>student@wpu.edu</code><br>
-                    Password for all: <code>password</code>
-                </p>
                 <p style="font-size:12px;">
                     <a href="setup_database_tables.php">Set up database tables</a>
                     &nbsp;|&nbsp;
